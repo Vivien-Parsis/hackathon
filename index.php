@@ -9,7 +9,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 header("Content-Type: application/json");
 
-$uri = "mongodb+srv://{$_ENV["DB_USER"]}:{$_ENV["DB_PASSWORD"]}@cluster0.5bdccxd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&ssl=true";
+$uri = $_ENV["DB_URI"];
 $apiVersion = new ServerApi(ServerApi::V1);
 $sslContext = stream_context_create([
     'ssl' => [

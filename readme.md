@@ -12,8 +12,8 @@ API en php pour gerer les photos et l'authentification
 
 ### Via docker 
 
-- cloner le dépot : `git clone https://github.com/Vivien-Parsis/`
-- pour le lancer l'api : `docker build -t hackathon . && docker run --rm -p 3000:80 --env DB_USER={username_for_mongodb} --env DB_PASSWORD={password_for_mongodb} --name hackathon hackathon`
+- cloner le dépot : `git clone https://github.com/Vivien-Parsis/hackathon`
+- pour le lancer l'api : `docker build -t hackathon . && docker run --rm -p 3000:80 --env-file .env --name hackathon hackathon`
 
 ## Adresse
 
