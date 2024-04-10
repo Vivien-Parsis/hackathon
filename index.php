@@ -30,7 +30,7 @@ function callMongoDB($info, $sslContext, $uri, $apiVersion): void
         $db = $client->selectDatabase('hackathon');
         if ($info['endpoint'] == "/user/get" && $info['method'] == "GET") {
             $col = $db->selectCollection('userlist');
-            $cursor = $col->find([]);
+            $cursor = $col->find([], ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]);
             $res = [];
             foreach ($cursor as $user) {
                 $res[] = $user;
@@ -47,19 +47,47 @@ function callMongoDB($info, $sslContext, $uri, $apiVersion): void
             }
             $hashedPassword = hash('sha256', $body->password);
             $col = $db->selectCollection('userlist');
+            $cursor = $col->find(["mail" => $body->mail]);
+            if (count($cursor->toArray()) >= 1) {
+                echo "{\"error\":\"already exist\"}";
+                return;
+            }
             $cursor = $col->insertOne([
                 "nom" => $body->nom,
                 "mail" => $body->mail,
                 "password" => $hashedPassword
             ]);
-            echo json_encode($body);
+            echo "{\"mail\":\"{$body->mail}\", \"nom\":\"{$body->password}\"}";
             return;
         }
-        if ($info["endpoint"] == "/user/delete" && $info["method"]== "POST"){
+        if ($info['endpoint'] == "/user/signin" && $info['method'] == "POST") {
+            $input = file_get_contents('php://input', true);
+            $body = json_decode($input);
+            if (!isset($body->mail) || !isset($body->password)) {
+                echo "{\"error\":\"missing argument\"}";
+                return;
+            }
+            $hashedPassword = hash('sha256', $body->password);
+            $col = $db->selectCollection('userlist');
+            $cursor = $col->find(["mail" => $body->mail, "password" => $hashedPassword]);
+            if (count($cursor->toArray()) == 0) {
+                echo "{\"error\":\"user doesn't exist or incorect \"}";
+                return;
+            }
+            $cursor = $col->find(
+                ["mail" => $body->mail, "password" => $hashedPassword],
+                ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]
+            );
+            foreach ($cursor as $login) {
+                echo json_encode($login);
+            }
+            return;
+        }
+        if ($info["endpoint"] == "/user/delete" && $info["method"] == "POST") {
             $input = file_get_contents('php://input', true);
             $col = $db->selectCollection('userlist');
             $body = json_decode($input);
-            if(!isset($body->mail) || !isset($body->password)) {
+            if (!isset($body->mail) || !isset($body->password)) {
                 echo "{\"error\":\"missing argument\"}";
                 return;
             }
@@ -72,10 +100,37 @@ function callMongoDB($info, $sslContext, $uri, $apiVersion): void
             echo "{\"mail\":\"{$body->mail}\"}";
             return;
         }
-        
+        if ($info["endpoint"] == "/user/update" && $info["method"] == "POST") {
+            $input = file_get_contents('php://input', true);
+            $col = $db->selectCollection('userlist');
+            $body = json_decode($input);
+            if (!isset($body->mail) || !isset($body->password)) {
+                echo "{\"error\":\"missing argument\"}";
+                return;
+            }
+            $hashedPassword = hash('sha256', $body->password);
+
+            if (isset($body->newMail)) {
+                $cursor = $col->updateOne(
+                    ['password' => $hashedPassword, 'mail' => $body->mail],
+                    ['$set' => ['mail' => $body->newMail]]
+                );
+                echo json_encode($cursor);
+                return;
+            }
+            if (isset($body->newNom)) {
+                $cursor = $col->updateOne(
+                    ['password' => $hashedPassword, 'nom' => $body->nom],
+                    ['$set' => ['nom' => $body->newNom]]
+                );
+                echo json_encode($cursor);
+                return;
+            }
+            echo "{\"error\":\"missing argument\"}";
+            return;
+        }
         echo "{\"error\":\"bad request\"}";
         http_response_code(404);
-        
     } catch (Exception $e) {
         echo $e->getMessage();
     }
