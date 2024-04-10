@@ -28,6 +28,10 @@ function callMongoDB($info, $sslContext, $uri, $apiVersion): void
         $client = new Client($uri, [], ['serverApi' => $apiVersion], [], false, $sslContext);
         $client->selectDatabase('admin')->command(['ping' => 1]);
         $db = $client->selectDatabase('hackathon');
+        if ($info["endpoint"]== "/"){
+            echo "hackathon api";
+            return;
+        }
         if ($info['endpoint'] == "/user/get" && $info['method'] == "GET") {
             $col = $db->selectCollection('userlist');
             $cursor = $col->find([], ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]);
@@ -115,7 +119,13 @@ function callMongoDB($info, $sslContext, $uri, $apiVersion): void
                     ['password' => $hashedPassword, 'mail' => $body->mail],
                     ['$set' => ['mail' => $body->newMail]]
                 );
-                echo json_encode($cursor);
+                $cursor = $col->find(
+                    ["mail" => $body->mail, "password" => $hashedPassword],
+                    ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]
+                );
+                foreach ($cursor as $login) {
+                    echo json_encode($login);
+                }
                 return;
             }
             if (isset($body->newNom)) {
@@ -123,7 +133,13 @@ function callMongoDB($info, $sslContext, $uri, $apiVersion): void
                     ['password' => $hashedPassword, 'nom' => $body->nom],
                     ['$set' => ['nom' => $body->newNom]]
                 );
-                echo json_encode($cursor);
+                $cursor = $col->find(
+                    ["mail" => $body->mail, "password" => $hashedPassword],
+                    ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]
+                );
+                foreach ($cursor as $login) {
+                    echo json_encode($login);
+                }
                 return;
             }
             echo "{\"error\":\"missing argument\"}";
