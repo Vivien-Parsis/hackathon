@@ -40,18 +40,42 @@ function callMongoDB($info, $sslContext, $uri, $apiVersion): void
         }
         if ($info['endpoint'] == "/user/signup" && $info['method'] == "POST") {
             $input = file_get_contents('php://input', true);
-            $col = $db->selectCollection('userlist');
             $body = json_decode($input);
-            if (!isset($body->nom) || !isset($body->mail)) {
-                echo "{'error':'missing argument'}";
+            if (!isset($body->nom) || !isset($body->mail) || !isset($body->password)) {
+                echo "{\"error\":\"missing argument\"}";
                 return;
             }
+            $hashedPassword = hash('sha256', $body->password);
+            $col = $db->selectCollection('userlist');
             $cursor = $col->insertOne([
                 "nom" => $body->nom,
-                "mail" => $body->mail
+                "mail" => $body->mail,
+                "password" => $hashedPassword
             ]);
-            echo "nom:{$body->nom}|mail:{$body->mail}";
+            echo json_encode($body);
+            return;
         }
+        if ($info["endpoint"] == "/user/delete" && $info["method"]== "POST"){
+            $input = file_get_contents('php://input', true);
+            $col = $db->selectCollection('userlist');
+            $body = json_decode($input);
+            if(!isset($body->mail) || !isset($body->password)) {
+                echo "{\"error\":\"missing argument\"}";
+                return;
+            }
+            $hashedPassword = hash('sha256', $body->password);
+            $col = $db->selectCollection('userlist');
+            $cursor = $col->deleteOne([
+                "mail" => $body->mail,
+                "password" => $hashedPassword
+            ]);
+            echo "{\"mail\":\"{$body->mail}\"}";
+            return;
+        }
+        
+        echo "{\"error\":\"bad request\"}";
+        http_response_code(404);
+        
     } catch (Exception $e) {
         echo $e->getMessage();
     }
