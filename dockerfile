@@ -33,4 +33,4 @@ COPY index.php /app/index.php
 
 RUN composer require mongodb/mongodb vlucas/phpdotenv
 
-CMD a2enmod rewrite remoteip && a2enconf z-app
+RUN a2enmod rewrite remoteip && a2enconf z-app
