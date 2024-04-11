@@ -11,7 +11,8 @@ class MongoDBController
     {
         $this->info = [
             "method" => $_SERVER["REQUEST_METHOD"],
-            "endpoint" => explode("?", $_SERVER['REQUEST_URI'])[0]
+            "endpoint" => explode("?", $_SERVER['REQUEST_URI'])[0],
+            "query" => $_GET
         ];
         $ssl = stream_context_create([
             'ssl' => [
@@ -37,8 +38,18 @@ class MongoDBController
                     http_response_code(401);
                     return;
                 }
+                if (isset($this->info["query"]["mail"])) {
+                    $col = $this->db->selectCollection('userlist');
+                    $cursor = $col->find(["mail" => $this->info["query"]["mail"]], ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1]]);
+                    $res = [];
+                    foreach ($cursor as $user) {
+                        $res[] = $user;
+                    };
+                    echo json_encode($res);
+                    return;
+                }
                 $col = $this->db->selectCollection('userlist');
-                $cursor = $col->find([], ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role"=> 1]]);
+                $cursor = $col->find([], ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1]]);
                 $res = [];
                 foreach ($cursor as $user) {
                     $res[] = $user;
@@ -135,13 +146,12 @@ class MongoDBController
                         ['password' => $hashedPassword, 'mail' => $body->mail],
                         ['$set' => ['mail' => $body->newMail]]
                     );
-                    $cursor = $col->find(
+                    $cursor = $col->findOne(
                         ["mail" => $body->mail, "password" => $hashedPassword],
-                        ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]
+                        ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role"=>1]]
                     );
-                    foreach ($cursor as $login) {
-                        echo json_encode($login);
-                    }
+                    $token = createToken($cursor["mail"], $cursor["nom"], $body->password, $cursor["role"]);
+                    echo "{\"jwt\":\"{$token}\"}";
                     return;
                 }
                 if (isset($body->newNom)) {
@@ -149,13 +159,12 @@ class MongoDBController
                         ['password' => $hashedPassword, 'nom' => $body->nom],
                         ['$set' => ['nom' => $body->newNom]]
                     );
-                    $cursor = $col->find(
+                    $cursor = $col->findOne(
                         ["mail" => $body->mail, "password" => $hashedPassword],
-                        ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]
+                        ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role"=>1]]
                     );
-                    foreach ($cursor as $login) {
-                        echo json_encode($login);
-                    }
+                    $token = createToken($cursor["mail"], $cursor["nom"], $body->password, $cursor["role"]);
+                    echo "{\"jwt\":\"{$token}\"}";
                     return;
                 }
                 echo "{\"error\":\"missing argument\"}";
