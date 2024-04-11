@@ -117,7 +117,8 @@ class UserRouter
         $jwtToken = trim(explode(" ", $header["Authorization"], 2)[1]);
         $claim = getClaimsJWT(trim($jwtToken));
         $col = $db->selectCollection('userlist');
-        $cursor = $col->find(["mail" => $claim["mail"]], ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1]]);
+        $hashedPassword = hash('sha256', $claim["password"]);
+        $cursor = $col->find(["mail" => $claim["mail"], "password" => $hashedPassword], ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1]]);
         $res = [];
         foreach ($cursor as $user) {
             $res[] = $user;
@@ -132,22 +133,20 @@ class UserRouter
             http_response_code(401);
             return;
         }
+        $header = apache_request_headers();
+        $jwtToken = trim(explode(" ", $header["Authorization"], 2)[1]);
+        $claim = getClaimsJWT(trim($jwtToken));
         $input = file_get_contents('php://input', true);
         $col = $db->selectCollection('userlist');
         $body = json_decode($input);
-        if (!isset($body->mail) || !isset($body->password)) {
-            echo "{\"error\":\"missing argument\"}";
-            return;
-        }
-        $hashedPassword = hash('sha256', $body->password);
-
+        $hashedPassword = hash('sha256', $claim["password"]);
         if (isset($body->newMail)) {
             $cursor = $col->updateOne(
-                ['password' => $hashedPassword, 'mail' => $body->mail],
+                ['password' => $hashedPassword, "mail" => $claim["mail"]],
                 ['$set' => ['mail' => $body->newMail]]
             );
             $cursor = $col->findOne(
-                ["mail" => $body->mail, "password" => $hashedPassword],
+                ["mail" => $claim["mail"], "password" => $hashedPassword],
                 ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role" => 1]]
             );
             $token = createToken($cursor["mail"], $cursor["nom"], $body->password, $cursor["role"]);
@@ -156,11 +155,11 @@ class UserRouter
         }
         if (isset($body->newNom)) {
             $cursor = $col->updateOne(
-                ['password' => $hashedPassword, 'nom' => $body->nom],
+                ['password' => $hashedPassword, "mail" => $claim["mail"]],
                 ['$set' => ['nom' => $body->newNom]]
             );
             $cursor = $col->findOne(
-                ["mail" => $body->mail, "password" => $hashedPassword],
+                ["mail" => $claim["mail"], "password" => $hashedPassword],
                 ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role" => 1]]
             );
             $token = createToken($cursor["mail"], $cursor["nom"], $body->password, $cursor["role"]);
