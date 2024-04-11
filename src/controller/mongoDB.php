@@ -19,11 +19,14 @@ class MongoDBController
     public function getDB(){
         return $this->db;
     }
-    function knowUser(string $mail, string $password): bool
+    function knowUser(string $mail, string $password, string $role): bool
     {
+        if(!isset($mail) || !isset($password) || !isset($role)){
+            return false;
+        }
         $hashedPassword = hash('sha256', $password);
         $col = $this->db->selectCollection('userlist');
-        $cursor = $col->find(["mail" => $mail, "password" => $hashedPassword]);
+        $cursor = $col->find(["mail" => $mail, "password" => $hashedPassword, "role"=> $role]);
         $cursorToArray = $cursor->toArray();
         return (count($cursorToArray) == 0 || count($cursorToArray) > 1) ? false : true;
     }

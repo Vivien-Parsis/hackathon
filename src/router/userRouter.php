@@ -2,25 +2,27 @@
 require_once './src/controller/createToken.php';
 require_once './src/controller/parseToken.php';
 
-class UserRouter{
-    public function run($db, $info){
-        if ($info['endpoint'] == "/user/get" && $info['method'] == "GET"){
+class UserRouter
+{
+    public function run($db, $info)
+    {
+        if ($info['endpoint'] == "/user/get" && $info['method'] == "GET") {
             $this->get($db, $info);
             return;
         }
-        if ($info['endpoint'] == "/user/signup" && $info['method'] == "POST"){
+        if ($info['endpoint'] == "/user/signup" && $info['method'] == "POST") {
             $this->signUp($db, $info);
             return;
         }
-        if ($info['endpoint'] == "/user/signin" && $info['method'] == "POST"){
+        if ($info['endpoint'] == "/user/signin" && $info['method'] == "POST") {
             $this->signIn($db, $info);
             return;
         }
-        if ($info['endpoint'] == "/user/delete" && $info['method'] == "POST"){
+        if ($info['endpoint'] == "/user/delete" && $info['method'] == "POST") {
             $this->delete($db, $info);
             return;
         }
-        if ($info['endpoint'] == "/user/update" && $info['method'] == "POST"){
+        if ($info['endpoint'] == "/user/update" && $info['method'] == "POST") {
             $this->update($db, $info);
             return;
         }
@@ -28,7 +30,8 @@ class UserRouter{
         echo "{\"error\":\"bad request\"}";
         http_response_code(404);
     }
-    public function signIn($db, $info){
+    public function signIn($db, $info)
+    {
         $input = file_get_contents('php://input', true);
         $body = json_decode($input);
         if (!isset($body->mail) || !isset($body->password)) {
@@ -51,7 +54,8 @@ class UserRouter{
         echo "{\"jwt\":\"{$token}\"}";
         return;
     }
-    public function signUp($db, $info){
+    public function signUp($db, $info)
+    {
         $input = file_get_contents('php://input', true);
         $body = json_decode($input);
         if (!isset($body->nom) || !isset($body->mail) || !isset($body->password)) {
@@ -75,7 +79,8 @@ class UserRouter{
         echo "{\"jwt\":\"{$token}\"}";
         return;
     }
-    public function delete($db, $info){
+    public function delete($db, $info)
+    {
         if (!checkJWT()) {
             echo "{\"error\":\"not Authorized\"}";
             http_response_code(401);
@@ -97,26 +102,68 @@ class UserRouter{
         echo "{\"mail\":\"{$body->mail}\"}";
         return;
     }
-    public function get($db, $info){
+    public function get($db, $info)
+    {
         if (!checkJWT()) {
             echo "{\"error\":\"not Authorized\"}";
             http_response_code(401);
             return;
         }
-        if (isset($info["query"]["mail"])) {
-            $col = $db->selectCollection('userlist');
-            $cursor = $col->find(["mail" => $info["query"]["mail"]], ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1]]);
-            $res = [];
-            foreach ($cursor as $user) {
-                $res[] = $user;
-            };
-            echo json_encode($res);
+        $header = apache_request_headers();
+        $jwtToken = trim(explode(" ", $header["Authorization"], 2)[1]);
+        $claim = getClaimsJWT(trim($jwtToken));
+        $col = $db->selectCollection('userlist');
+        $cursor = $col->find(["mail" => $claim["mail"]], ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1]]);
+        $res = [];
+        foreach ($cursor as $user) {
+            $res[] = $user;
+        };
+        echo json_encode($res);
+        return;
+    }
+    public function update($db, $info)
+    {
+        if (!checkJWT()) {
+            echo "{\"error\":\"not Authorized\"}";
+            http_response_code(401);
+            return;
+        }
+        $input = file_get_contents('php://input', true);
+        $col = $db->selectCollection('userlist');
+        $body = json_decode($input);
+        if (!isset($body->mail) || !isset($body->password)) {
+            echo "{\"error\":\"missing argument\"}";
+            return;
+        }
+        $hashedPassword = hash('sha256', $body->password);
+
+        if (isset($body->newMail)) {
+            $cursor = $col->updateOne(
+                ['password' => $hashedPassword, 'mail' => $body->mail],
+                ['$set' => ['mail' => $body->newMail]]
+            );
+            $cursor = $col->findOne(
+                ["mail" => $body->mail, "password" => $hashedPassword],
+                ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role" => 1]]
+            );
+            $token = createToken($cursor["mail"], $cursor["nom"], $body->password, $cursor["role"]);
+            echo "{\"jwt\":\"{$token}\"}";
+            return;
+        }
+        if (isset($body->newNom)) {
+            $cursor = $col->updateOne(
+                ['password' => $hashedPassword, 'nom' => $body->nom],
+                ['$set' => ['nom' => $body->newNom]]
+            );
+            $cursor = $col->findOne(
+                ["mail" => $body->mail, "password" => $hashedPassword],
+                ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role" => 1]]
+            );
+            $token = createToken($cursor["mail"], $cursor["nom"], $body->password, $cursor["role"]);
+            echo "{\"jwt\":\"{$token}\"}";
             return;
         }
         echo "{\"error\":\"missing argument\"}";
         return;
-    }
-    public function update($db, $info){
-
     }
 }

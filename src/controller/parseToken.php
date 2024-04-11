@@ -31,7 +31,7 @@ function checkJWT(): bool
     if (trim($jwtToken) != "") {
         $claim = getClaimsJWT(trim($jwtToken));
         $mongoDB = new MongoDBController();
-        return $mongoDB->knowUser($claim["mail"], $claim["password"]);
+        return $mongoDB->knowUser($claim["mail"], $claim["password"], $claim["role"]);
     }
 
     return false;

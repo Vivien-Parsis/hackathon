@@ -24,9 +24,9 @@ API en php pour gerer les photos et l'authentification
 
 ### User
 
-#### Réquete pour récuperer un user
+#### Réquete pour récuperer ses infos
 
-GET `http://localhost:3000/user/get?mail={mail}`
+GET `http://localhost:3000/user/get`
 
 ```
 Header HTTP
