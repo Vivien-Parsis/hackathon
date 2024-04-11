@@ -24,12 +24,12 @@ API en php pour gerer les photos et l'authentification
 
 #### Réquete pour récuperer un user
 
-GET `http://localhost:3000/user/get`
+GET `http://localhost:3000/user/get?mail={mail}`
 
-`
-Header HTTP >
+```
+Header HTTP
 Authorization : Bearer {JWT_Here}
-`
+```
 #### Réquete pour se connecter
 
 POST `http://localhost:3000/user/signin`
@@ -54,18 +54,34 @@ body HTTP
 }
 ```
 
-#### Réquete pour modifier
+#### Réquete pour modifier un user
 
 POST `http://localhost:3000/user/up`
 
-`
-Header HTTP >
+```
+Header HTTP
 Authorization : Bearer {JWT_Here}
-`
+```
 ```json
 body HTTP 
 {
     "newNom":"{your_new_name}", ou "newMail":"{your_new_mail}"
+    "mail":"{your_mail}",
+    "password":"{your_password}"
+}
+```
+
+#### Réquete pour supprimer un user
+
+POST `http://localhost:3000/user/up`
+
+```
+Header HTTP
+Authorization : Bearer {JWT_Here}
+```
+```json
+body HTTP 
+{
     "mail":"{your_mail}",
     "password":"{your_password}"
 }
