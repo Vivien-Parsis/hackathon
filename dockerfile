@@ -32,6 +32,6 @@ COPY conf/apache.conf /etc/apache2/conf-available/z-app.conf
 COPY index.php /app/index.php
 COPY src /app/src 
 
-RUN composer require mongodb/mongodb vlucas/phpdotenv firebase/php-jwt lcobucci/jwt
+RUN composer require mongodb/mongodb lcobucci/jwt
 
 RUN a2enmod rewrite remoteip && a2enconf z-app

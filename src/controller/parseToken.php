@@ -8,6 +8,7 @@ use Lcobucci\JWT\Token\InvalidTokenStructure;
 use Lcobucci\JWT\Token\Parser;
 use Lcobucci\JWT\Token\UnsupportedHeaderFound;
 use Lcobucci\JWT\UnencryptedToken;
+
 require_once './src/controller/mongoDB.php';
 
 function haveAuthHeader(): bool
@@ -16,10 +17,7 @@ function haveAuthHeader(): bool
     if (gettype($header) == "boolean") {
         return false;
     }
-    if (isset($header["Authorization"])) {
-        return str_starts_with($header["Authorization"], "Bearer ") && trim($header["Authorization"]) != "Bearer";
-    }
-    return false;
+    return isset($header["Authorization"]) ? str_starts_with($header["Authorization"], "Bearer ") && trim($header["Authorization"]) != "Bearer" : false;
 }
 
 function checkJWT(): bool
@@ -50,9 +48,9 @@ function getClaimsJWT(string $jwt): array
     }
     assert($token instanceof UnencryptedToken);
     $value = [
-        'mail'=> $token->claims()->get('mail'),
-        'password'=> $token->claims()->get('password')
+        'mail' => $token->claims()->get('mail'),
+        'password' => $token->claims()->get('password'),
+        'role' => $token->claims()->get('role')
     ];
     return $value;
 }
-

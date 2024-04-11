@@ -38,7 +38,7 @@ class MongoDBController
                     return;
                 }
                 $col = $this->db->selectCollection('userlist');
-                $cursor = $col->find([], ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]);
+                $cursor = $col->find([], ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role"=> 1]]);
                 $res = [];
                 foreach ($cursor as $user) {
                     $res[] = $user;
@@ -63,9 +63,10 @@ class MongoDBController
                 $cursor = $col->insertOne([
                     "nom" => $body->nom,
                     "mail" => $body->mail,
-                    "password" => $hashedPassword
+                    "password" => $hashedPassword,
+                    "role" => "client"
                 ]);
-                $token = createToken($body->mail, $body->nom, $body->password);
+                $token = createToken($body->mail, $body->nom, $body->password, "client");
                 echo "{\"jwt\":\"{$token}\"}";
                 return;
             }
@@ -83,15 +84,21 @@ class MongoDBController
                     echo "{\"error\":\"user doesn't exist or incorect \"}";
                     return;
                 }
-                $cursor = $col->find(
+                $cursor = $col->findOne(
                     ["mail" => $body->mail, "password" => $hashedPassword],
-                    ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1]]
+                    ["projection" => ["nom" => 1, "password" => 1, "_id" => 0, "mail" => 1, "role" => 1]]
                 );
-                $token = createToken($body->mail, $body->nom, $body->password);
+                $client = $cursor["role"];
+                $token = createToken($body->mail, $body->nom, $body->password, $client);
                 echo "{\"jwt\":\"{$token}\"}";
                 return;
             }
             if ($this->info["endpoint"] == "/user/delete" && $this->info["method"] == "POST") {
+                if (!checkJWT()) {
+                    echo "{\"error\":\"not Authorized\"}";
+                    http_response_code(401);
+                    return;
+                }
                 $input = file_get_contents('php://input', true);
                 $col = $this->db->selectCollection('userlist');
                 $body = json_decode($input);
@@ -109,6 +116,11 @@ class MongoDBController
                 return;
             }
             if ($this->info["endpoint"] == "/user/update" && $this->info["method"] == "POST") {
+                if (!checkJWT()) {
+                    echo "{\"error\":\"not Authorized\"}";
+                    http_response_code(401);
+                    return;
+                }
                 $input = file_get_contents('php://input', true);
                 $col = $this->db->selectCollection('userlist');
                 $body = json_decode($input);
@@ -161,10 +173,6 @@ class MongoDBController
         $col = $this->db->selectCollection('userlist');
         $cursor = $col->find(["mail" => $mail, "password" => $hashedPassword]);
         $cursorToArray = $cursor->toArray();
-        if (count($cursorToArray) == 0 || count($cursorToArray) > 1) {
-            echo "{\"error\":\"user doesn't exist or incorect \"}";
-            return false;
-        }
-        return true;
+        return (count($cursorToArray) == 0 || count($cursorToArray) > 1) ? false : true;
     }
 }
