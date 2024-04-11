@@ -26,6 +26,10 @@ class UserRouter
             $this->update($db);
             return;
         }
+        if ($info['endpoint'] == "/user/jwt" && $info['method'] == "POST") {
+            $this->jwt($db);
+            return;
+        }
         header("Content-Type: application/json");
         echo "{\"error\":\"bad request\"}";
         http_response_code(404);
@@ -168,5 +172,25 @@ class UserRouter
         }
         echo "{\"error\":\"missing argument\"}";
         return;
+    }
+    public function jwt($db){
+        if (!checkJWT()) {
+            echo "{\"error\":\"not Authorized\"}";
+            http_response_code(401);
+            return;
+        }
+        $header = apache_request_headers();
+        $jwtToken = trim(explode(" ", $header["Authorization"], 2)[1]);
+        $claim = getClaimsJWT(trim($jwtToken));
+        $input = file_get_contents('php://input', true);
+        $col = $db->selectCollection('userlist');
+        $cursor = $col->findOne(["mail" => $claim["mail"], "password" => $claim["password"], ""], 
+        ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1, "password"=> 1]]);
+        if(!isset($cursor)){
+            echo "{\"error\":\"unknown jwt\"}";
+            return;
+        }
+        echo "{\"jwt\":\"{$jwtToken}\"}";
+            return;
     }
 }
