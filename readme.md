@@ -22,6 +22,8 @@ API en php pour gerer les photos et l'authentification
 
 ## Route
 
+### User
+
 #### Réquete pour récuperer un user
 
 GET `http://localhost:3000/user/get?mail={mail}`
@@ -86,3 +88,17 @@ body HTTP
     "password":"{your_password}"
 }
 ```
+
+### Image
+
+#### Réquete pour récuper le logo
+
+GET `http://localhost:3000/assets/img/icone/logocream.png`
+
+## Auteur
+
+- [Vivien PARSIS](https://github.com/Vivien-Parsis)
+- [Adam MALEK](https://github.com/Beuhnnyto)
+- [Adam DAUVE](https://github.com/Karlamilyi)
+- [Tanguy MERCIER](https://github.com/MercierTanguy)
+- [Aris ABROUS](https://github.com/Zongotripledozo)
