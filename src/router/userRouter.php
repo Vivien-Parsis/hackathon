@@ -7,30 +7,30 @@ class UserRouter
     public function run($db, $info)
     {
         if ($info['endpoint'] == "/user/get" && $info['method'] == "GET") {
-            $this->get($db, $info);
+            $this->get($db);
             return;
         }
         if ($info['endpoint'] == "/user/signup" && $info['method'] == "POST") {
-            $this->signUp($db, $info);
+            $this->signUp($db);
             return;
         }
         if ($info['endpoint'] == "/user/signin" && $info['method'] == "POST") {
-            $this->signIn($db, $info);
+            $this->signIn($db);
             return;
         }
         if ($info['endpoint'] == "/user/delete" && $info['method'] == "POST") {
-            $this->delete($db, $info);
+            $this->delete($db);
             return;
         }
         if ($info['endpoint'] == "/user/update" && $info['method'] == "POST") {
-            $this->update($db, $info);
+            $this->update($db);
             return;
         }
         header("Content-Type: application/json");
         echo "{\"error\":\"bad request\"}";
         http_response_code(404);
     }
-    public function signIn($db, $info)
+    public function signIn($db)
     {
         $input = file_get_contents('php://input', true);
         $body = json_decode($input);
@@ -54,12 +54,16 @@ class UserRouter
         echo "{\"jwt\":\"{$token}\"}";
         return;
     }
-    public function signUp($db, $info)
+    public function signUp($db)
     {
         $input = file_get_contents('php://input', true);
         $body = json_decode($input);
         if (!isset($body->nom) || !isset($body->mail) || !isset($body->password)) {
             echo "{\"error\":\"missing argument\"}";
+            return;
+        }
+        if(!filter_var($body->mail, FILTER_VALIDATE_EMAIL)){
+            echo "{\"error\":\"invalid mail format\"}";
             return;
         }
         $hashedPassword = hash('sha256', $body->password);
@@ -79,7 +83,7 @@ class UserRouter
         echo "{\"jwt\":\"{$token}\"}";
         return;
     }
-    public function delete($db, $info)
+    public function delete($db)
     {
         if (!checkJWT()) {
             echo "{\"error\":\"not Authorized\"}";
@@ -102,7 +106,7 @@ class UserRouter
         echo "{\"mail\":\"{$body->mail}\"}";
         return;
     }
-    public function get($db, $info)
+    public function get($db)
     {
         if (!checkJWT()) {
             echo "{\"error\":\"not Authorized\"}";
@@ -121,7 +125,7 @@ class UserRouter
         echo json_encode($res);
         return;
     }
-    public function update($db, $info)
+    public function update($db)
     {
         if (!checkJWT()) {
             echo "{\"error\":\"not Authorized\"}";
