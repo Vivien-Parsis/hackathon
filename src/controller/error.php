@@ -18,6 +18,6 @@ class ErrorController{
             return;
         }
         http_response_code(400);
-        echo "{\"error\":\"Bad Request\"}";
+        echo "{\"error\":\"Method Not Allowed\"}";
     }
 }

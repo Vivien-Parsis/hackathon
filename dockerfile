@@ -17,6 +17,10 @@ RUN apt-get update && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
     
+    
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -29,9 +33,11 @@ COPY conf/vhost.conf /etc/apache2/sites-available/000-default.conf
 
 COPY conf/apache.conf /etc/apache2/conf-available/z-app.conf
 
+# COPY conf/.htaccess /app/.htaccess
+
 COPY index.php /app/index.php
 COPY src /app/src 
 
 RUN composer require mongodb/mongodb lcobucci/jwt
 
-RUN a2enmod rewrite remoteip && a2enconf z-app
+RUN a2enmod rewrite remoteip && a2enconf z-app && a2enmod headers

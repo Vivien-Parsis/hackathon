@@ -1,4 +1,5 @@
 <?php
+header("Access-Control-Allow-Origin: *");
 require_once './src/controller/mongoDB.php';
 require_once './src/router/userRouter.php';
 require_once './src/router/imageRouter.php';

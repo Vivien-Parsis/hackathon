@@ -1,4 +1,5 @@
 <?php
+header("Access-Control-Allow-Origin: *");
 require_once './src/controller/createToken.php';
 require_once './src/controller/parseToken.php';
 require_once './src/controller/error.php';
@@ -16,19 +17,19 @@ class UserRouter
             return;
         }
         if ($info['endpoint'] == "/user/signup") {
-            if($info['method'] != "POST"){
-                ErrorController::http_error(405);
+            if($info['method'] == "POST" || $info['method'] == "OPTIONS"){
+                $this->signUp($db);
                 return;
             }
-            $this->signUp($db);
+            ErrorController::http_error(405);
             return;
         }
         if ($info['endpoint'] == "/user/signin") {
-            if($info['method'] != "POST"){
-                ErrorController::http_error(405);
+            if($info['method'] == "POST" || $info['method'] == "OPTIONS"){
+                $this->signIn($db);
                 return;
             }
-            $this->signIn($db);
+            ErrorController::http_error(405);
             return;
         }
         if ($info['endpoint'] == "/user/delete") {
