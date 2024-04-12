@@ -66,7 +66,7 @@ class UserRouter
             echo "{\"error\":\"missing argument\"}";
             return;
         }
-        if(!filter_var($body->mail, FILTER_VALIDATE_EMAIL)){
+        if (!filter_var($body->mail, FILTER_VALIDATE_EMAIL)) {
             echo "{\"error\":\"invalid mail format\"}";
             return;
         }
@@ -173,7 +173,8 @@ class UserRouter
         echo "{\"error\":\"missing argument\"}";
         return;
     }
-    public function jwt($db){
+    public function jwt($db)
+    {
         if (!checkJWT()) {
             echo "{\"error\":\"not Authorized\"}";
             http_response_code(401);
@@ -184,13 +185,16 @@ class UserRouter
         $claim = getClaimsJWT(trim($jwtToken));
         $input = file_get_contents('php://input', true);
         $col = $db->selectCollection('userlist');
-        $cursor = $col->findOne(["mail" => $claim["mail"], "password" => $claim["password"], ""], 
-        ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1, "password"=> 1]]);
-        if(!isset($cursor)){
+        $hashedPassword = hash('sha256', $claim["password"]);
+        $cursor = $col->findOne(
+            ["mail" => $claim["mail"], "password" => $hashedPassword, "role" => $claim["role"]],
+            ["projection" => ["nom" => 1, "_id" => 0, "mail" => 1, "role" => 1, "password" => 1]]
+        );
+        if (!isset($cursor)) {
             echo "{\"error\":\"unknown jwt\"}";
             return;
         }
         echo "{\"jwt\":\"{$jwtToken}\"}";
-            return;
+        return;
     }
 }
