@@ -38,7 +38,7 @@ body HTTP
 }
 ```
 renvoie un jwt de la forme {"jwt":"{created_token}"} ou erreur
-### Réquete pour vérifier son jwt
+#### Réquete pour vérifier son jwt
 
 POST `http://localhost:3000/user/jwt`
 
