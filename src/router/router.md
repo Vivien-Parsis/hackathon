@@ -10,6 +10,9 @@ GET `http://localhost:3000/user/get`
 Header HTTP
 Authorization : Bearer {JWT_Here}
 ```
+
+renvoie nos infos ou erreur
+
 #### Réquete pour se connecter
 
 POST `http://localhost:3000/user/signin`
@@ -21,6 +24,7 @@ body HTTP
     "password":"{your_password}"
 }
 ```
+renvoie un jwt de la forme {"jwt":"{created_token}"} ou erreur
 #### Réquete pour s'inscrire
 
 POST `http://localhost:3000/user/signup`
@@ -33,6 +37,7 @@ body HTTP
     "password":"{your_password}"
 }
 ```
+renvoie un jwt de la forme {"jwt":"{created_token}"} ou erreur
 ### Réquete pour vérifier son jwt
 
 POST `http://localhost:3000/user/jwt`
@@ -41,7 +46,7 @@ POST `http://localhost:3000/user/jwt`
 Header HTTP
 Authorization : Bearer {JWT_Here}
 ```
-
+renvoie notre jwt ou erreur
 #### Réquete pour modifier un user
 
 POST `http://localhost:3000/user/up`
@@ -58,7 +63,7 @@ body HTTP
     "password":"{your_password}"
 }
 ```
-
+renvoie notre nouveau jwt ou erreur
 #### Réquete pour supprimer un user
 
 POST `http://localhost:3000/user/up`
