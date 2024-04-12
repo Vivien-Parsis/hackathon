@@ -1,38 +1,62 @@
 <?php
 require_once './src/controller/createToken.php';
 require_once './src/controller/parseToken.php';
+require_once './src/controller/error.php';
 
 class UserRouter
 {
     public function run($db, $info)
     {
-        if ($info['endpoint'] == "/user/get" && $info['method'] == "GET") {
+        if ($info['endpoint'] == "/user/get") {
+            if($info['method'] != "GET"){
+                ErrorController::http_error(405);
+                return;
+            }
             $this->get($db);
             return;
         }
-        if ($info['endpoint'] == "/user/signup" && $info['method'] == "POST") {
+        if ($info['endpoint'] == "/user/signup") {
+            if($info['method'] != "POST"){
+                ErrorController::http_error(405);
+                return;
+            }
             $this->signUp($db);
             return;
         }
-        if ($info['endpoint'] == "/user/signin" && $info['method'] == "POST") {
+        if ($info['endpoint'] == "/user/signin") {
+            if($info['method'] != "POST"){
+                ErrorController::http_error(405);
+                return;
+            }
             $this->signIn($db);
             return;
         }
-        if ($info['endpoint'] == "/user/delete" && $info['method'] == "POST") {
+        if ($info['endpoint'] == "/user/delete") {
+            if($info['method'] != "POST"){
+                ErrorController::http_error(405);
+                return;
+            }
             $this->delete($db);
             return;
         }
-        if ($info['endpoint'] == "/user/update" && $info['method'] == "POST") {
+        if ($info['endpoint'] == "/user/update") {
+            if($info['method'] != "POST"){
+                ErrorController::http_error(405);
+                return;
+            }
             $this->update($db);
             return;
         }
-        if ($info['endpoint'] == "/user/jwt" && $info['method'] == "POST") {
+        if ($info['endpoint'] == "/user/jwt") {
+            if($info['method'] != "POST"){
+                ErrorController::http_error(405);
+                return;
+            }
             $this->jwt($db);
             return;
         }
         header("Content-Type: application/json");
-        echo "{\"error\":\"bad request\"}";
-        http_response_code(404);
+        ErrorController::http_error(404);
     }
     public function signIn($db)
     {
@@ -84,14 +108,14 @@ class UserRouter
             "role" => "client"
         ]);
         $token = createToken($body->mail, $body->nom, $body->password, "client");
+        http_response_code(201);
         echo "{\"jwt\":\"{$token}\"}";
         return;
     }
     public function delete($db)
     {
         if (!checkJWT()) {
-            echo "{\"error\":\"not Authorized\"}";
-            http_response_code(401);
+            ErrorController::http_error(401);
             return;
         }
         $input = file_get_contents('php://input', true);
@@ -113,8 +137,7 @@ class UserRouter
     public function get($db)
     {
         if (!checkJWT()) {
-            echo "{\"error\":\"not Authorized\"}";
-            http_response_code(401);
+            ErrorController::http_error(401);
             return;
         }
         $header = apache_request_headers();
@@ -133,8 +156,7 @@ class UserRouter
     public function update($db)
     {
         if (!checkJWT()) {
-            echo "{\"error\":\"not Authorized\"}";
-            http_response_code(401);
+            ErrorController::http_error(401);
             return;
         }
         $header = apache_request_headers();
@@ -176,8 +198,7 @@ class UserRouter
     public function jwt($db)
     {
         if (!checkJWT()) {
-            echo "{\"error\":\"not Authorized\"}";
-            http_response_code(401);
+            ErrorController::http_error(401);
             return;
         }
         $header = apache_request_headers();

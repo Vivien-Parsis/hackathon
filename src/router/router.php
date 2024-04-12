@@ -36,7 +36,6 @@ class Router
             return;
         }
         header("Content-Type: application/json");
-        echo "{\"error\":\"bad request\"}";
-        http_response_code(404);
+        ErrorController::http_error(404);
     }
 }
